@@ -1,0 +1,24 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t mandyzach/react-test -f ./client/Dockerfile.dev ./client
+  
+script:
+  - docker run mandyzach/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t mandyzach/multi-client ./client
+  - docker build -t mandyzach/multi-nginx ./nginx
+  - docker build -t mandyzach/multi-server ./server
+  - docker build -t mandyzach/multi-worker ./worker
+  # login to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" ---password-stdin
+
+  # take those images and push them to docker hub
+  - docker push mandyzach/multi-client
+  - docker push mandyzach/multi-nginx
+  - docker push mandyzach/multi-server
+  - docker push mandyzach/multi-worker
+
